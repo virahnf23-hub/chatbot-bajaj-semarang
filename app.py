@@ -1,56 +1,55 @@
 import streamlit as str
-import google.generativeai as genai
 
 # --- KONFIGURASI HALAMAN ---
 str.set_page_config(page_title="Bajaj Semarang BOT", page_icon="🛺", layout="centered")
 
+# --- JUDUL & TAMPILAN ---
 str.title("🛺 BoSem: Chatbot Bajaj Semarang")
 str.caption("Monggo! Tanya rute, tarif, atau info seputar Bajaj di Semarang.")
 
-# --- INITIALISASI GOOGLE GEMINI AI ---
-try:
-    # Mengambil API Key dari Streamlit Secrets
-    api_key = str.secrets["ANTIGRAVITY_API_KEY"]
-    genai.configure(api_key=api_key)
-except Exception:
-    api_key = None
-
+# --- INISIALISASI RIWAYAT CHAT ---
 if "messages" not in str.session_state:
     str.session_state.messages = [
-        {"role": "user", "parts": ["Kamu adalah BoSem, chatbot asisten layanan Bajaj di Kota Semarang. Jawablah dengan ramah, informatif, gunakan sedikit bahasa khas Semarangan (seperti 'Sih', 'Ik', 'Monggo', 'Lur'). Berikan estimasi rute atau tarif sekitar Lawang Sewu, Kota Lama, atau Simpang Lima."]},
-        {"role": "model", "parts": ["Halo lur! Isok tak bantu opo iki seputar Bajaj Semarang? 🛺"]}
+        {
+            "role": "assistant", 
+            "content": "Halo lur! Isok tak bantu opo iki seputar Bajaj Semarang? 🛺"
+        }
     ]
 
-# Tampilkan riwayat
+# --- MENAMPILKAN RIWAYAT CHAT ---
 for msg in str.session_state.messages:
-    # Jangan tampilkan prompt system pertama agar rapi
-    if msg["parts"][0].startswith("Kamu adalah BoSem"):
-        continue
-    role = "user" if msg["role"] == "user" else "assistant"
-    with str.chat_message(role):
-        str.write(msg["parts"][0])
+    with str.chat_message(msg["role"]):
+        str.write(msg["content"])
 
-# Input pengguna
+# --- INPUT DARI PENGGUNA ---
 if user_input := str.chat_input("Mau pergi ke mana hari ini?"):
+    # Tampilkan chat pengguna
     with str.chat_message("user"):
         str.write(user_input)
     
-    str.session_state.messages.append({"role": "user", "parts": [user_input]})
+    # Simpan ke session state
+    str.session_state.messages.append({"role": "user", "content": user_input})
     
+    # --- PROSES JAWABAN INSTAN (ANTI MACET) ---
     with str.chat_message("assistant"):
-        with str.spinner("Sik ya, lagi mikir..."):
-            try:
-                # Menggunakan model Gemini resmi yang stabil
-                model = genai.GenerativeModel('gemini-1.5-flash')
-                response = model.generate_content(str.session_state.messages)
-                answer = response.text
-                str.write(answer)
-            except Exception as e:
-                # Cadangan jika API Key belum dimasukkan di Secrets
-                if "tarif" in user_input.lower() or "harga" in user_input.lower():
-                    answer = "Tarif dasar Bajaj Semarang mulai dari Rp 10.000 untak jarak dekat lur. Kalau keliling kota bisa nego langsung sama pak sopirnya!"
-                else:
-                    answer = "Yoo lur, mau jalan-jalan ke Simpang Lima, Kota Lama, atau Lawang Sewu? Bajaj Semarang siap mengantar kamu kapan aja! 🛺"
-                str.write(answer)
+        with str.spinner("Sik ya..."):
+            teks_input = user_input.lower()
             
-            str.session_state.messages.append({"role": "model", "parts": [answer]})
+            # Logika pencarian kata kunci rute & tarif Semarang
+            if "tarif" in teks_input or "harga" in teks_input or "ongkos" in teks_input:
+                answer = "Tarif dasar Bajaj Semarang mulai dari Rp 10.000 untak jarak dekat lur. Kalau mau keliling seharian bisa nego langsung sama pak sopirnya, dijamin murah!"
+            elif "rute" in teks_input or "jalan" in teks_input or "ke mana" in teks_input:
+                answer = "BoSem siap anter kamu ke rute-rute andalan Semarang lur! Mulai dari Simpang Lima, Kota Lama, Lawang Sewu, Sampookong, sampe Klenteng Sam Poo Kong gass terus!"
+            elif "kota lama" in teks_input:
+                answer = "Yoo lur, kalau mau ke Kota Lama tarif bajajnya sekitar Rp 15.000 - Rp 25.000 aja dari Simpang Lima. Tempatnya asyik buat foto-foto!"
+            elif "lawang sewu" in teks_input:
+                answer = "Ke Lawang Sewu? Siap lur! Naik bajaj lewat jalan pemuda biar cepet, tarifnya aman dikantong mahasiswa."
+            elif "halo" in teks_input or "hai" in teks_input or "p" == teks_input:
+                answer = "Halo juga lur! Selamat datang di layanan Bajaj Semarang. Mau jalan-jalan ke mana kita hari ini? 🛺"
+            else:
+                answer = "Wah, BoSem agak kurang paham maksudmu lur hhehe. Tapi tenang, Bajaj Semarang siap mengantar kamu keliling Lawang Sewu, Kota Lama, atau Simpang Lima kapan aja! Mau tanya tarif atau rute?"
+
+            str.write(answer)
+            
+            # Simpan jawaban ke session state
+            str.session_state.messages.append({"role": "assistant", "content": answer})
