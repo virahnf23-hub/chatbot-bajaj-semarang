@@ -66,7 +66,7 @@ if user_input := str.chat_input("Mau pergi ke mana hari ini?"):
                 elif "tarif" in user_input.lower() or "harga" in user_input.lower():
                     answer = "Tarif dasar Bajaj Semarang mulai dari Rp 10.000 untak jarak dekat lur. Kalau keliling kota bisa nego langsung sama pak sopirnya!"
                 else:
-                    answer = f"Waduh koneksiku rada ngadat lur (Error: {str(e)}). Tapi tenang, Bajaj Semarang siap mengantar kamu keliling Lawang Sewu atau Simpang Lima kapan aja!"
+                    answer = f"Waduh koneksiku rada ngadat lur (Error: {e}). Tapi tenang, Bajaj Semarang siap mengantar kamu keliling Lawang Sewu atau Simpang Lima kapan aja!"
                 
                 str.write(answer)
             
